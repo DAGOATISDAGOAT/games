@@ -1,0 +1,63 @@
+import pygame
+import sys
+import random
+import time
+screen_height = 900
+screen_width = 900
+green = (0, 255, 0)
+black = (0, 0, 0)
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("mole mash game")
+pygame.init()  # Initialize Pygame
+# Load and scale images
+bg = pygame.image.load("Hi.jpg")
+bg = pygame.transform.scale(bg, (screen_width, screen_height))
+mole = pygame.image.load("th__1_-removebg-preview.png")
+mole = pygame.transform.scale(mole, (200, 200))
+mole_position = [(700, 200), (700, 0), (700, 400), (400, 400), (400, 200), (400, 00), (100, 00), (100, 200), (100, 400)]
+def score(score1):
+    score_font = pygame.font.SysFont("Arial", 30)
+    score_text = score_font.render("Score: " + str(score1), True, "Red")
+    screen.blit(score_text, (10, 10))  # Position the score text
+def gameover(score1):
+    gameover_font = pygame.font.SysFont("Arial", 60)
+    gameover_text = gameover_font.render("Game Over! Score: " + str(score1), True, "Red")
+    gameover_rect = gameover_text.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(gameover_text, gameover_rect)
+score1 = 0
+game_running = True
+while game_running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game_running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = pygame.mouse.get_pos()
+            for molex, moley in mole_position:
+                mole_Rect = pygame.Rect(molex, moley, mole.get_width(), mole.get_height())
+                if mole_Rect.collidepoint(x, y):
+                    score1 += 1
+    # **Draw the background image first**
+    screen.blit(bg, (0, 0)) 
+    # **Draw the circles on top of the background**
+    pygame.draw.circle(screen, black, (200, 100), 80)
+    pygame.draw.circle(screen, black, (500, 100), 80)
+    pygame.draw.circle(screen, black, (800, 100), 80)
+    pygame.draw.circle(screen, black, (200, 300), 80)
+    pygame.draw.circle(screen, black, (500, 300), 80)
+    pygame.draw.circle(screen, black, (800, 300), 80)
+    pygame.draw.circle(screen, black, (200, 500), 80)
+    pygame.draw.circle(screen, black, (500, 500), 80)
+    pygame.draw.circle(screen, black, (800, 500), 80)
+    score(score1)
+    if score1 == 10:
+        gameover(score1)
+        pygame.display.update()
+        time.sleep(3)  # Wait for 3 seconds before quitting
+        break
+    # **Draw the mole last**
+    rant = random.randint(0, 8)  # Generate a random number between 0 and 8
+    screen.blit(mole, mole_position[rant])
+    pygame.display.update()
+    time.sleep(2)  # Wait for 2 seconds before the mole disappears
+    pygame.display.update()
+pygame.quit()
