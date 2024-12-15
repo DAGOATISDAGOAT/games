@@ -1,0 +1,166 @@
+import pygame
+import math
+import random
+import time
+
+score1 = 0
+width = 900
+height = 900
+
+pygame.init()
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Flappy Bird")
+
+# Correct image loading
+try:
+    bg = pygame.image.load("HII.jpg")
+    bg = pygame.transform.scale(bg, (width, height))
+
+    pig = pygame.image.load("angry-birds-pig-vector-removebg-preview.png")
+    bird = pygame.image.load("OIP (7).jpg")
+    bird = pygame.transform.scale(bird, (120, 120))
+
+    restart = pygame.image.load("restart.jpg")
+    quit = pygame.image.load("stop-isolated-elegant-green-round-button-abstract-illustration-stop-elegant-green-round-button-104804673.webp")
+except Exception as e:
+    print(f"Error loading images: {e}")
+    pygame.quit()
+    exit()
+
+# Initialize clock
+clock = pygame.time.Clock()
+
+def draw_score():
+    score_font = pygame.font.SysFont("Arial", 30)
+    score_text = score_font.render(f"Score: {score1}", True, "Red")
+    screen.blit(score_text, (10, 10))
+
+def game_over():
+    gameover_font = pygame.font.SysFont("Arial", 30)
+    gameover_text = gameover_font.render(f"Game Over! Score: {score1}", True, "Red")
+    text_rect = gameover_text.get_rect(center=(width // 2, height // 2))
+    screen.blit(gameover_text, text_rect)
+
+class AngyBird:
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.original_pos = (x, y)
+        self.velocity = (0, 0)
+        self.drag = False
+
+    def update(self):
+        if self.drag:
+            mouse_pos = pygame.mouse.get_pos()
+            self.rect.center = mouse_pos
+        else:
+            self.rect.x += self.velocity[0]
+            self.rect.y += self.velocity[1]
+            distance = math.sqrt((self.rect.x - self.original_pos[0])**2 + (self.rect.y - self.original_pos[1])**2)
+            if distance > 300:
+                self.reset_pos()
+
+    def start_drag(self):
+        self.drag = True
+
+    def end_drag(self):
+        self.drag = False
+        mouse_pos = pygame.mouse.get_pos()
+        direction = (self.original_pos[0] - mouse_pos[0], self.original_pos[1] - mouse_pos[1])
+        speed = 10
+        self.velocity = (direction[0] // speed, direction[1] // speed)
+
+    def hit_pig(self):
+        global score1
+        score1 += 1
+
+    def reset_pos(self):
+        self.rect.topleft = self.original_pos
+        self.velocity = (0, 0)
+
+class Button:
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect(topleft=(x, y))
+
+# Creating buttons
+quit_button = Button(0, 0, quit)
+refresh_button = Button(50, 0, restart)
+
+# Initialize the bird
+player_bird = AngyBird(100, 400, bird)
+
+# Pig class
+class Piggy:
+    def __init__(self, x, y, image):
+        self.image = image
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.hit = False
+
+    def reset(self, x, y):
+        self.rect.topleft = (x, y)
+        self.hit = False
+
+def create_pigs():
+    pigs = []
+    for _ in range(5):
+        x = random.randrange(200, 600)
+        y = random.randrange(200, 600)
+        pigs.append(Piggy(x, y, pig))
+    return pigs
+
+pigs = create_pigs()
+
+def refresh_screen():
+    global player_bird, pigs, score1
+    score1 = 0
+    player_bird.reset_pos()
+    for pig in pigs:
+        pig.reset(random.randrange(200, 600), random.randrange(200, 600))  # Reset pig positions and state
+    screen.blit(bg, (0, 0))
+    for pig in pigs:
+        if not pig.hit:
+            screen.blit(pig.image, pig.rect)
+    screen.blit(player_bird.image, player_bird.rect)
+    screen.blit(quit.image, quit.rect)
+    screen.blit(restart.image, restart.rect)
+    draw_score()
+
+while True:
+    screen.fill((255, 255, 255))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if quit.rect.collidepoint(event.pos):
+                pygame.quit()
+                exit()
+            elif refresh_button.rect.collidepoint(event.pos):
+                refresh_screen()
+            elif player_bird.rect.collidepoint(event.pos):
+                player_bird.start_drag()
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if player_bird.drag:
+                player_bird.end_drag()
+
+        elif event.type == pygame.MOUSEMOTION:
+            if player_bird.drag:
+                player_bird.update()
+
+    for pig in pigs:
+        if player_bird.rect.colliderect(pig.rect) and not pig.hit:
+            player_bird.hit_pig()
+            pig.hit = True
+
+    # Update and draw all entities
+    refresh_screen()
+
+    # Check for game over
+    if score1 == 5:
+        game_over()
+
+    pygame.display.update()
+    clock.tick(30)
